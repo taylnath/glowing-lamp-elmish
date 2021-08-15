@@ -5,7 +5,7 @@
     "start": "webpack-dev-server",
     "build": "webpack",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^16.8.0",

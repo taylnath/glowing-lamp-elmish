@@ -106,7 +106,7 @@ let Square (props : SquareProps) =
       // transition here
     ]
     prop.onClick props.changeColor
-    prop.text props.text
+    // prop.text props.text
   ]
 // end square
 
