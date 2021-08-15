@@ -92,6 +92,7 @@ type SquareProps =
     xPos: int
     yPos: int
     changeColor: Browser.Types.MouseEvent -> unit
+    transitionDuration: int
     text: string
   }
 
@@ -112,6 +113,9 @@ let Square (props : SquareProps) =
       style.left (props.xPos * 60)
       style.top (props.yPos * 60)
       style.padding 10
+      style.transitionDuration (System.TimeSpan(0, 0, 0, 0, props.transitionDuration))
+      style.transitionProperty "background-color"
+      style.transitionTimingFunction.easeInOut
       // transition here
     ]
     prop.onClick props.changeColor
@@ -138,6 +142,7 @@ let render (state: State) (dispatch: Msg -> unit) =
                 xPos = i
                 yPos = j
                 changeColor = (fun _ -> dispatch (ChangeColorByKey key))
+                transitionDuration = 500
                 text = key
               }
             | _  -> 
@@ -146,6 +151,7 @@ let render (state: State) (dispatch: Msg -> unit) =
                 xPos = 0
                 yPos = 0
                 changeColor = (fun _ -> printfn "oops")
+                transitionDuration = 500
                 text = "00"
               }
         ]
