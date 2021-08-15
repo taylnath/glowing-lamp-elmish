@@ -4,6 +4,8 @@ open Elmish
 open Elmish.React
 open Feliz
 
+let inline (%!) a b = (a % b + b) % b
+
 type colorType = 
   {
     backgroundColor: string
@@ -29,14 +31,14 @@ type Msg =
     | ChangeColorByKey of string
 
 let colors = ["red"; "orange"; "yellow"; "green"; "blue"; "indigo"; "violet"]
-let grid = [for i in 0 .. 5 do for j in 0 .. 5 -> [i; j]]
+let grid = [for i in 0 .. 4 do for j in 0 .. 4 -> [i; j]]
 let keys = List.map (fun (tup: list<int>) -> tup |> (List.map (sprintf "%i")) |> String.concat "") grid
 let initialColors = Map(seq {for key in keys -> (key, {backgroundColor = ""; clicked = false; count = 0; colorIndex = -1; index = -1})})
 
 let init() =
     { 
       Count = 0 
-      counter = 0
+      counter = 1
       currentlyClicking = false
       currentInterval = ""
       clickingFast = false
@@ -56,34 +58,19 @@ let update (msg: Msg) (state: State): State =
     | Decrement ->
         { state with Count = state.Count - 1 }
     | ChangeColorByKey key -> 
-        let newSquareColors = (
-          if not state.squareColors.[key].clicked then
-            state.squareColors.Add(key, {state.squareColors.[key] with count = state.counter; clicked = true})
+        let currClicked = state.squareColors.[key].clicked
+        let currCount = state.squareColors.[key].count
+        if currClicked then currCount else state.counter
+        |> (fun newCount -> {state.squareColors.[key] with count = newCount; clicked = true})
+        |> (fun newKeyedSquareColors -> state.squareColors.Add(key, newKeyedSquareColors))
+        |> (Map.map (fun _ value -> 
+          if value.clicked then // update colors for clicked squares
+            (value.colorIndex + value.count) %! colors.Length
+            |> (fun newIndex -> if newIndex = value.colorIndex then (newIndex + 1) %! colors.Length else newIndex)
+            |> (fun newIndex -> { value with backgroundColor = colors.[newIndex]; colorIndex = newIndex })
           else 
-            state.squareColors
-        )
-        newSquareColors
-        |> (Map.map (fun key value -> 
-          if value.clicked then
-            let newColorIndexMaybe = (value.colorIndex + value.count) % colors.Length
-            let newColorIndex = 
-              (
-                if newColorIndexMaybe = value.colorIndex then
-                  (newColorIndexMaybe + 1) % colors.Length
-                else
-                  newColorIndexMaybe
-              )
-            let newColor = colors.[newColorIndex]
-            { value with backgroundColor = newColor; colorIndex = newColorIndex }
-          else 
-            value
-        ))
-        |> (fun sc -> { state with squareColors = sc})
-        // { state with squareColors = state.squareColors.Change("00", (fun x -> Some {GetColorTypeOrDefault x with backgroundColor = "red"}))}
-    // | ChangeColorByKey key ->
-    //   let mutable newSquareColors = state.squareColors
-    //   if not state.squareColors.[key].clicked then 
-    //     newSquareColors = {newSquareColors with newSquareColors.[key] = {newSquareColors.[key] with count = counter; clicked = true}}
+            value ))
+        |> (fun sc -> { state with squareColors = sc; counter = state.counter + (if currClicked then 0 else 1)})
 
 // square stuff
 type SquareProps =
@@ -119,6 +106,7 @@ let Square (props : SquareProps) =
       // transition here
     ]
     prop.onClick props.changeColor
+    prop.text props.text
   ]
 // end square
 
